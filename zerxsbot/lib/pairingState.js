@@ -24,6 +24,9 @@ const state = {
 };
 
 function setConnection(status, extra = {}) {
+  // normalisasi: "open" -> "online", "close"/"offline" -> "offline"
+  if (status === "open") status = "online";
+  else if (status === "close" || status === "connecting" || status === "offline") status = "offline";
   state.connectionStatus = status;
   state.lastUpdate = Date.now();
   Object.assign(state, extra);
@@ -32,7 +35,6 @@ function setConnection(status, extra = {}) {
 function setQR(qr) {
   state.qrString = qr;
   state.qrGeneratedAt = Date.now();
-  state.connectionStatus = "qr";
   state.lastUpdate = Date.now();
 }
 
