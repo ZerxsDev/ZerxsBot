@@ -1,6 +1,13 @@
 // ============================================================
-// ZerxsBot - index.js
+// ZerxsBot - index.js (versi bersih, tanpa log error Baileys)
 // WhatsApp Bot (@whiskeysockets/baileys) + Web Pairing Server
+//
+// Perbaikan:
+//  - printQRInTerminal dihapus (opsi deprecated -> QR tampil di web)
+//  - logger pino level "fatal" + filter pesan "Timed Out" / init
+//    queries sehingga terminal tetap bersih saat koneksi terputus
+//  - reconnect sederhana dengan delay & batas percobaan
+//  - semua perintah dimuat otomatis dari folder commands/
 // ============================================================
 const makeWASocket = require("@whiskeysockets/baileys").default;
 const {
@@ -17,39 +24,62 @@ const pairingState = require("./lib/pairingState");
 const { handleCommand } = require("./handler/commands");
 const startWebServer = require("./web/server");
 
-const logger = pino({ level: "warn" });
+// ---------- Logger super senyap ----------
+// level "fatal" saja yang lolos, dan pesan timeout internal Baileys
+// (fetchProps / init queries "Timed Out") dibungkam karena akan
+// pulih sendiri lewat mekanisme reconnect di bawah.
+const silentBase = pino({ level: "silent" });
+const logger = silentBase.child({ level: "fatal" });
+logger.child = () => logger; // cegah Baileys membuat child berisik
+function isNoiseError(errMsg) {
+  const s = String(errMsg || "");
+  return /Timed\s*Out|init queries|fetchProps|530|device offline|status@broadcast/i.test(s);
+}
 
-let sock = null; // instance Baileys aktif (dipakai web server untuk pairing)
+let sock = null;            // instance Baileys aktif (dipakai web server untuk pairing)
+let reconnectAttempts = 0;  // jumlah percobaan ulang berturut-turut
+let closingManually = false;
+let webStarted = false;
 
 async function startBot() {
   const sessionDir = config.baileys.sessionFolder;
   if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
 
   const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
-  const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: undefined }));
+  let version;
+  try {
+    ({ version } = await fetchLatestBaileysVersion());
+  } catch (_) {
+    version = undefined; // pakai default Baileys bila gagal cek versi
+  }
 
   sock = makeWASocket({
     version,
-    logger,
+    logger,                        // senyap — tidak ada log merah lagi
     auth: {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger)
     },
-    printQRInTerminal: true, // QR juga tampil di terminal
     browser: ["ZerxsBot", "Chrome", "1.0.0"],
-    markOnlineOnConnect: true
+    markOnlineOnConnect: true,
+    syncFullHistory: false,
+    shouldSyncHistoryMessage: () => false,
+    connectTimeoutMs: 60000,
+    queryTimeoutMs: 60000
+    // NOTE: printQRInTerminal SENGAJA TIDAK dipakai (deprecated).
+    // QR ditangani sendiri lewat event connection.update -> tampil di web panel.
   });
 
   // ---------- Koneksi & QR ----------
   sock.ev.on("connection.update", async (update) => {
-    const { connection, lastPullResult, qr, code, creds } = update;
+    const { connection, lastPullResult, qr, code, creds, error } = update;
 
     if (qr) {
       pairingState.setQR(qr);
-      console.log("[ZerxsBot] QR diterima. Scan lewat web panel menu Pairing atau terminal.");
+      reconnectAttempts = 0;
+      console.log("📱 QR tersedia. Buka http://localhost:" + config.web.port + " menu Pairing untuk scan, atau gunakan kode pairing.");
     }
 
-    // pairing code dari WA (bila tersedia otomatis)
     if (code) {
       pairingState.state.pairingCode = code;
       console.log(`[ZerxsBot] Kode pairing otomatis: ${code}`);
@@ -58,19 +88,36 @@ async function startBot() {
     if (connection === "open") {
       pairingState.setConnection("online");
       pairingState.clearQR();
+      reconnectAttempts = 0;
       console.log("✅ [ZerxsBot] Berhasil terhubung ke WhatsApp!");
     }
 
     if (connection === "close") {
       pairingState.setConnection("offline");
-      const loggedOut = creds && creds.logoutDate && creds.logoutDate > 0;
-      const reason = lastPullResult && lastPullResult.status;
-      if (loggedOut || reason === DisconnectReason.loggedOut) {
+      const loggedOut =
+        (creds && creds.logoutDate && creds.logoutDate > 0) ||
+        (lastPullResult && lastPullResult.status === DisconnectReason.loggedOut);
+
+      if (loggedOut) {
         console.log("❌ Sesi logout. Hapus folder ./sessions lalu jalankan ulang & pairing lagi.");
         return;
       }
-      console.log("🔄 Koneksi terputus, menyambung ulang dalam 3 detik...");
-      setTimeout(startBot, 3000);
+
+      // bungkam detail error yang bukan masalah serius (timeout dll.)
+      if (error && !isNoiseError(error.message)) {
+        console.log("⚠️ Koneksi tertutup:", error.message);
+      } else {
+        console.log("🔄 Koneksi terputus — menyambung ulang otomatis...");
+      }
+
+      if (closingManually) return;
+      reconnectAttempts++;
+      if (reconnectAttempts > 8) {
+        console.log("⛔ Gagal reconnect 8x berturut-turut. Periksa internet lalu jalankan ulang `node index.js`.");
+        return;
+      }
+      const delay = Math.min(3000 * reconnectAttempts, 20000); // 3s, 6s, 9s ... maks 20s
+      setTimeout(() => startBot().catch(() => {}), delay);
     }
   });
 
@@ -83,11 +130,10 @@ async function startBot() {
     const clean = String(phone).replace(/[^0-9]/g, "");
     if (!clean || clean.length < 10) return { ok: false, message: "Nomor tidak valid." };
     try {
-      // requestPairingCode(nomor, idAlfanumerik8Karakter)
       const reqId = "ZXR" + Math.random().toString(36).slice(2, 8).toUpperCase();
       const kode = await Promise.race([
         sock.requestPairingCode(clean, reqId),
-        new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout request pairing code")), 30000))
+        new Promise((_, rej) => setTimeout(() => rej(new Error("Waktu habis saat meminta kode pairing, coba lagi.")), 30000))
       ]);
       if (kode) {
         pairingState.state.pairingCode = kode;
@@ -117,7 +163,9 @@ async function startBot() {
       try {
         await handleCommand(sock, m);
       } catch (err) {
-        console.error("[ZerxsBot] Error menangani pesan:", err.message);
+        if (!isNoiseError(err.message)) {
+          console.error("[ZerxsBot] Error menangani pesan:", err.message);
+        }
       }
     }
   });
@@ -127,12 +175,22 @@ async function startBot() {
 
 // ---------- Jalankan bot + web server ----------
 (async () => {
+  // web server selalu jalan walau bot sedang reconnect
+  if (!webStarted) {
+    startWebServer(() => sock);
+    webStarted = true;
+    console.log(`🌐 Web pairing ZerxsBot berjalan di http://localhost:${config.web.port}`);
+  }
   try {
     await startBot();
   } catch (e) {
-    console.error("Gagal memulai bot:", e.message);
-    setTimeout(startBot, 5000);
+    if (!isNoiseError(e.message)) console.error("Gagal memulai bot:", e.message);
+    setTimeout(() => startBot().catch(() => {}), 5000);
   }
-  startWebServer(() => sock);
-  console.log(`🌐 Web pairing ZerxsBot berjalan di http://localhost:${config.web.port}`);
 })();
+
+process.on("unhandledRejection", (reason) => {
+  // tangkap rejection internal Baileys agar proses tidak mati & terminal bersih
+  if (isNoiseError(reason && reason.message ? reason.message : reason)) return;
+  console.error("Unhandled rejection:", reason);
+});
