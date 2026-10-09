@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZerxsBot - Dashboard</title>
+  <link rel="stylesheet" href="/public/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- ============ SIDEBAR / NAVBAR ============ -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">🤖</div>
+        <span><b>ZerxsBot</b></span>
+      </div>
+      <nav id="sideNav">
+        <a class="nav-item active" data-menu="beranda" href="#beranda">🏠 <span class="nav-text">Beranda</span></a>
+        <a class="nav-item" data-menu="pairing" href="#pairing">📲 <span class="nav-text">Pairing</span></a>
+        <a class="nav-item" data-menu="fitur" href="#fitur">✨ <span class="nav-text">Fitur</span></a>
+      </nav>
+      <a class="btn secondary logout-btn" href="/logout">🚪 <span class="nav-text">Keluar</span></a>
+    </aside>
+
+    <!-- ============ KONTEN UTAMA ============ -->
+    <main class="main">
+      <div class="topbar">
+        <h2 id="pageTitle">Beranda</h2>
+        <span class="badge off" id="botStatusBadge">CEK STATUS...</span>
+      </div>
+
+      <!-- ================= HALAMAN BERANDA ================= -->
+      <section id="page-beranda">
+        <!-- kotak banner: nama web + tanggal & jam hari ini -->
+        <div class="banner">
+          <h1>🤖 ZerxsBot Pairing Panel</h1>
+          <div class="datetime" id="dateTimeNow">-</div>
+        </div>
+
+        <div class="grid">
+          <!-- kotak info pengguna -->
+          <div class="card info-card">
+            <h3>👤 Info Pengguna</h3>
+            <div class="user-head">
+              <div class="avatar" id="userAvatar">?</div>
+              <div>
+                <div style="font-weight:700;font-size:16px" id="userName">-</div>
+                <div style="color:var(--muted);font-size:12.5px">Profil default (tidak dapat diganti)</div>
+              </div>
+            </div>
+            <div class="kv"><span class="k">Username</span><span class="v" id="uUsername">-</span></div>
+            <div class="kv"><span class="k">Nomor</span><span class="v" id="uNomor">-</span></div>
+            <div class="kv"><span class="k">Expired</span><span class="v" id="uExpired">-</span></div>
+          </div>
+
+          <!-- kotak global info -->
+          <div class="card info-card">
+            <h3>🌍 Global Info</h3>
+            <div class="kv"><span class="k">Pengguna yang login</span><span class="v" id="gLoggedUsers">-</span></div>
+            <div class="kv"><span class="k">Akun di Spreadsheet</span><span class="v" id="gAccounts">-</span></div>
+            <div class="kv"><span class="k">Total login</span><span class="v" id="gLogins">-</span></div>
+            <div class="kv"><span class="k">Status Bot</span><span class="v" id="gBotStatus">-</span></div>
+            <div class="kv"><span class="k">Spreadsheet API</span><span class="v" id="gBackend">-</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= HALAMAN PAIRING ================= -->
+      <section id="page-pairing" style="display:none">
+        <div class="pair-grid">
+          <!-- panel QR -->
+          <div class="card info-card">
+            <h3>🔳 Scan QR Code</h3>
+            <div class="qr-box" id="qrBox"><span class="hint">Menunggu QR dari bot...<br/>QR muncul otomatis saat sesi baru dibuat.</span></div>
+            <p class="hint" style="margin-top:12px">
+              Buka WhatsApp → Perangkat Tertaut → Tautkan Perangkat → pindai kode di atas.
+            </p>
+          </div>
+
+          <!-- panel pairing code -->
+          <div class="card info-card">
+            <h3>📲 Pairing dengan Nomor Telepon</h3>
+            <div class="field">
+              <label>NOMOR WHATSAPP TARGET</label>
+              <div class="phone-row">
+                <select class="country" id="pairDial">
+                  <option value="62" selected>🇮🇩 +62</option>
+                  <option value="60">🇲🇾 +60</option>
+                  <option value="65">🇸🇬 +65</option>
+                  <option value="1">🇺🇸 +1</option>
+                  <option value="44">🇬🇧 +44</option>
+                  <option value="91">🇮🇳 +91</option>
+                </select>
+                <input type="text" id="pairPhone" placeholder="8123456789" inputmode="numeric" />
+              </div>
+            </div>
+            <button class="btn" id="btnPair">Buat Kode Pairing</button>
+            <div class="code-display" id="pairCode" style="display:none">--------</div>
+            <div class="alert" id="pairAlert"></div>
+            <p class="hint" style="margin-top:10px">
+              Cara pakai: pada HP target buka <b>WhatsApp → Pengaturan → Perangkat Tertaut →
+              Tautkan Perangkat → Tautkan dengan nomor telepon</b>, lalu masukkan 8 digit kode di atas.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= HALAMAN FITUR ================= -->
+      <section id="page-fitur" style="display:none">
+        <div class="card info-card">
+          <h3>✨ Daftar Fitur &amp; Perintah ZerxsBot (Personal Chat)</h3>
+          <table class="feature-table">
+            <thead>
+              <tr><th>Perintah</th><th>Cara Pakai</th><th>Fungsi</th></tr>
+            </thead>
+            <tbody id="featureBody"><tr><td colspan="3" class="hint">Memuat fitur...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/public/js/dashboard.js"></script>
+</body>
+</html>

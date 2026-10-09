@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZerxsBot - Loading...</title>
+  <link rel="stylesheet" href="/public/style.css" />
+</head>
+<body>
+  <div class="loader-wrap" id="loaderWrap">
+    <div class="spiral"></div>
+    <div class="loader-title">ZerxsBot</div>
+    <div class="loader-sub" id="loaderSub">Memuat sistem pairing WhatsApp...</div>
+  </div>
+
+  <script>
+    // Halaman loading spiral: setelah selesai -> tampilkan kotak form login.
+    const subs = [
+      "Memeriksa koneksi server...",
+      "Menyiapkan modul bot...",
+      "Menghubungkan ke Google Spreadsheet...",
+      "Sistem siap."
+    ];
+    let i = 0;
+    const sub = document.getElementById("loaderSub");
+    const intv = setInterval(() => {
+      if (i < subs.length) sub.textContent = subs[i++];
+    }, 700);
+
+    setTimeout(() => {
+      clearInterval(intv);
+      // lempar ke halaman login (form tetap dalam SPA bila ingin satu file: lihat login.html)
+      window.location.href = "/login";
+    }, 2600);
+  </script>
+</body>
+</html>
