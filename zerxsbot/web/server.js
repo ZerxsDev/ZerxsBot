@@ -73,24 +73,37 @@ function startWebServer(getSock) {
 
   // ---------- API: profil + global info ----------
   app.get("/api/profile", requireLogin, async (req, res) => {
-    const stats = await spreadsheet.getStats();
-    const s = pairingState.state;
-    res.json({
-      ok: true,
-      user: req.session.user,
-      bot: {
-        name: config.botName,
-        status: s.connectionStatus === "online" ? "ONLINE" : "OFFLINE",
-        online: s.connectionStatus === "online"
-      },
-      global: {
-        totalAccounts: stats.data.total_accounts,
-        totalLogins: stats.data.total_logins,
-        uniqueLoggedUsers: stats.data.unique_logged_users,
-        backendOk: stats.ok
-      },
-      time: new Date().toISOString()
-    });
+    try {
+      const stats = await spreadsheet.getStats();
+      const s = pairingState.state;
+      const u = req.session.user || {};
+      // dinormalisasi agar field yang dibaca dashboard selalu tersedia
+      const user = {
+        username: u.username || "-",
+        nomor: u.nomor || "-",
+        nama: u.nama_profil || u.nama || u.name || u.username || "-",
+        expired: u.expired || u.expiredDate || "-"
+      };
+      const online = s.connectionStatus === "online";
+      res.json({
+        ok: true,
+        user,
+        bot: {
+          name: config.botName,
+          status: online ? "ONLINE" : "OFFLINE",
+          online
+        },
+        global: {
+          totalAccounts: stats.data.total_accounts,
+          totalLogins: stats.data.total_logins,
+          uniqueLoggedUsers: stats.data.unique_logged_users,
+          backendOk: stats.ok
+        },
+        time: new Date().toISOString()
+      });
+    } catch (e) {
+      res.status(500).json({ ok: false, message: "Error: " + e.message });
+    }
   });
 
   // ---------- API: status pairing / QR ----------
