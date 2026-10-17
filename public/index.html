@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZerxsBot — WhatsApp Bot Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- ===== BACKGROUND TECHNO GRID ===== -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow glow-1"></div>
+  <div class="bg-glow glow-2"></div>
+
+  <!-- ===== LOADING SPIRAL AWAL ===== -->
+  <div id="bootLoader" class="fullscreen-center">
+    <div class="spiral-wrap">
+      <div class="spiral"></div>
+      <h1 class="brand-title glitch" data-text="ZerxsBot">ZerxsBot</h1>
+      <p class="loading-text">Memuat sistem...</p>
+    </div>
+  </div>
+
+  <!-- ===== LOGIN BOX ===== -->
+  <div id="loginScreen" class="fullscreen-center hidden">
+    <div class="glass-card login-card anim-pop">
+      <div class="login-icon"><i class="fa-solid fa-globe"></i></div>
+      <h2 class="brand-title small">ZerxsBot</h2>
+      <p class="login-desc">WhatsApp bot multi-device dengan sistem pairing QR &amp; kode, manajemen akun lewat Google Spreadsheet, serta AI OpenRouter.</p>
+
+      <form id="loginForm" autocomplete="off">
+        <label class="field">
+          <span><i class="fa-solid fa-user"></i> Username</span>
+          <input type="text" id="inpUsername" placeholder="username" required />
+        </label>
+        <label class="field">
+          <span><i class="fa-solid fa-phone"></i> Nomor HP</span>
+          <div class="phone-row">
+            <span class="phone-prefix">🇮🇩 +62</span>
+            <input type="tel" id="inpPhone" placeholder="81234567890" pattern="[0-9]{8,13}" required />
+          </div>
+        </label>
+        <label class="field">
+          <span><i class="fa-solid fa-lock"></i> Password</span>
+          <div class="pass-wrap">
+            <input type="password" id="inpPassword" placeholder="••••••••" required />
+            <button type="button" class="eye" id="btnEye"><i class="fa-solid fa-eye"></i></button>
+          </div>
+        </label>
+        <div id="loginError" class="error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary full" id="btnLogin">
+          <i class="fa-solid fa-right-to-bracket"></i> Masuk
+        </button>
+        <button type="button" class="btn btn-ghost full" id="btnBuyToggle">
+          <i class="fa-solid fa-cart-shopping"></i> Belum punya akses? Beli
+        </button>
+      </form>
+
+      <!-- daftar harga role -->
+      <div id="priceBox" class="price-box hidden">
+        <h4><i class="fa-solid fa-crown"></i> Harga &amp; Benefit Akses</h4>
+        <div id="priceList" class="price-list"></div>
+        <a href="https://t.me/zerxsdev" target="_blank" class="btn btn-primary full">
+          <i class="fa-brands fa-telegram"></i> Beli Akses via Telegram
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VIDEO INTRO SETELAH LOGIN ===== -->
+  <div id="videoIntro" class="fullscreen-center hidden">
+    <video id="introVideo" src="/assets/loading.mp4" autoplay muted playsinline></video>
+    <button id="btnSkip" class="skip-btn"><i class="fa-solid fa-forward-step"></i> Skip</button>
+  </div>
+
+  <!-- ===== APP UTAMA ===== -->
+  <div id="app" class="hidden">
+    <!-- NAVBAR -->
+    <nav class="navbar">
+      <div class="nav-brand"><i class="fa-solid fa-robot"></i> <span class="brand-title small">ZerxsBot</span></div>
+      <div class="nav-links" id="navLinks">
+        <a href="#" data-page="home" class="nav-link active"><i class="fa-solid fa-house"></i> Beranda</a>
+        <a href="#" data-page="botmanager" class="nav-link"><i class="fa-solid fa-robot"></i> Bot Manager</a>
+        <a href="#" data-page="features" class="nav-link"><i class="fa-solid fa-wand-magic-sparkles"></i> Fitur</a>
+        <a href="#" data-page="info" class="nav-link"><i class="fa-solid fa-circle-info"></i> Info</a>
+        <a href="#" data-page="profile" class="nav-link"><i class="fa-solid fa-user-gear"></i> Profil</a>
+        <a href="#" data-page="developer" class="nav-link dev-only hidden"><i class="fa-solid fa-code"></i> Developer</a>
+      </div>
+      <div class="nav-side">
+        <span class="sidebar-badge" id="sbActiveMenu"><i class="fa-solid fa-bars-staggered"></i> <b id="sbMenuName">Beranda</b></span>
+        <span class="sidebar-badge" id="sbBotCount"><i class="fa-solid fa-robot"></i> <b id="sbBotNum">0</b> bot</span>
+        <span class="sidebar-badge" id="sbRole"><i class="fa-solid fa-shield-halved"></i> <b id="sbRoleName">-</b></span>
+        <button class="btn-icon" id="btnLogout" title="Keluar"><i class="fa-solid fa-power-off"></i></button>
+      </div>
+    </nav>
+
+    <main class="content">
+      <!-- ============ BERANDA ============ -->
+      <section id="page-home" class="page">
+        <div class="banner glass-card">
+          <h1 class="banner-title"><i class="fa-solid fa-robot"></i> ZerxsBot</h1>
+          <p class="banner-sub">Panel kontrol WhatsApp Bot Multi Device</p>
+          <div class="banner-clock" id="liveClock">—</div>
+        </div>
+
+        <div class="card glass-card user-card">
+          <h3><i class="fa-solid fa-id-card-clip"></i> Info Pengguna</h3>
+          <div class="user-row">
+            <div class="avatar-default" id="uAvatar">Z</div>
+            <div class="user-fields">
+              <div class="uf"><span>Nama Pengguna</span><b id="uName">-</b></div>
+              <div class="uf"><span>Nomor Pengguna</span><b id="uPhone">-</b></div>
+              <div class="uf"><span>Expired</span><b id="uExpire">-</b></div>
+              <div class="uf"><span>Profil</span><b class="locknote"><i class="fa-solid fa-lock"></i> Default (tidak dapat diganti)</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card glass-card global-card">
+          <h3><i class="fa-solid fa-satellite-dish"></i> Global Info</h3>
+          <div class="counters">
+            <div class="counter c-blue"><i class="fa-solid fa-users"></i><div class="c-num" id="gUsers">0</div><div class="c-label">Pengguna Login / Spreadsheet</div></div>
+            <div class="counter c-cyan"><i class="fa-solid fa-database"></i><div class="c-num" id="gBots">0</div><div class="c-label">Akun di Spreadsheet</div></div>
+            <div class="counter" id="gStatusBox"><i class="fa-solid fa-circle-nodes"></i><div class="c-num" id="gStatus">…</div><div class="c-label">Status Server</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ BOT MANAGER ============ -->
+      <section id="page-botmanager" class="page hidden">
+        <div class="counters">
+          <div class="counter c-purple"><i class="fa-solid fa-shield-halved"></i><div class="c-num" id="bmRole">-</div><div class="c-label">Role Pengguna</div></div>
+          <div class="counter c-green"><i class="fa-solid fa-toggle-on"></i><div class="c-num" id="bmActive">0</div><div class="c-label">Bot Aktif</div></div>
+          <div class="counter c-blue"><i class="fa-solid fa-table"></i><div class="c-num" id="bmSheet">…</div><div class="c-label">Status Spreadsheet</div></div>
+        </div>
+
+        <div class="card glass-card bm-actions">
+          <button class="btn btn-primary" id="btnAddBot"><i class="fa-solid fa-plus"></i> Tambahkan Nomor Bot</button>
+          <button class="btn btn-danger" id="btnDelBotMode"><i class="fa-solid fa-trash-can"></i> Hapus Bot</button>
+        </div>
+
+        <!-- form tambah bot -->
+        <div id="addBotForm" class="card glass-card hidden">
+          <h3><i class="fa-solid fa-satellite"></i> Pairing Bot Baru</h3>
+          <div class="grid-2">
+            <label class="field"><span><i class="fa-solid fa-mobile-screen"></i> Nomor Bot (62xxx)</span>
+              <input type="tel" id="bmNoBot" placeholder="6281234567890" /></label>
+            <label class="field"><span><i class="fa-solid fa-signature"></i> Nama Bot</span>
+              <input type="text" id="bmNamaBot" placeholder="ZerxsBot / nama bisnis" /></label>
+            <label class="field"><span><i class="fa-solid fa-layer-group"></i> Jenis Bot</span>
+              <select id="bmJenis">
+                <option value="biasa">Bot Biasa (prefix perintah)</option>
+                <option value="cs" id="optCs" disabled>Bot CS (tanpa prefix — Business/Developer)</option>
+              </select></label>
+          </div>
+          <!-- prompt AI khusus bot CS -->
+          <div id="csProfileBox" class="cs-box hidden">
+            <h4><i class="fa-solid fa-headset"></i> Prompt AI Bot CS (agar balasan lebih natural)</h4>
+            <label class="field"><span>Nama Bisnis</span><input type="text" id="csBizName" placeholder="Toko Berkah Jaya" /></label>
+            <label class="field"><span>Deskripsi / Produk / Harga (dipakai AI CS)</span>
+              <textarea id="csBizDesc" rows="4" placeholder="Contoh: Kami menjual jasa SEO mulai Rp150.000/bulan, penyewaan bot WA Rp50.000/bulan, layanan 24 jam..."></textarea></label>
+          </div>
+          <div class="pair-tabs">
+            <button class="btn btn-ghost active" id="tabQr"><i class="fa-solid fa-qrcode"></i> QR Code</button>
+            <button class="btn btn-ghost" id="tabPair"><i class="fa-solid fa-key"></i> Pairing Code</button>
+          </div>
+          <div id="qrArea" class="qr-area">
+            <img id="qrImg" alt="QR" class="hidden" />
+            <p id="qrHint" class="muted">Tekan "Start &amp; Pair" lalu scan QR dengan WhatsApp → Perangkat Tertaut.</p>
+          </div>
+          <div id="pairArea" class="pair-area hidden">
+            <div class="phone-row">
+              <span class="phone-prefix">🇮🇩 +62</span>
+              <input type="tel" id="pairPhone" placeholder="81234567890 (nomor HP target)" />
+            </div>
+            <div class="pair-code-display" id="pairCodeOut">KODE MUNCUL DI SINI</div>
+          </div>
+          <div class="row-end">
+            <button class="btn btn-primary" id="btnStartPair"><i class="fa-solid fa-play"></i> Start &amp; Pair</button>
+            <button class="btn btn-success hidden" id="btnGetCode"><i class="fa-solid fa-key"></i> Minta Pairing Code</button>
+          </div>
+          <div id="bmMsg" class="msg-line"></div>
+        </div>
+
+        <!-- daftar bot -->
+        <div class="card glass-card bots-list-card">
+          <h3><i class="fa-solid fa-list-check"></i> Daftar Bot</h3>
+          <div id="botsGrid" class="bots-grid">
+            <p class="muted">Memuat…</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ FITUR ============ -->
+      <section id="page-features" class="page hidden">
+        <div class="card glass-card">
+          <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Fitur Sesuai Role — <span id="ftRoleTag" class="tag"></span></h3>
+          <div class="counters mini">
+            <div class="counter c-blue"><i class="fa-solid fa-comment-dots"></i><div class="c-num" id="ftQuota">-</div><div class="c-label">Kuota Chat Harian</div></div>
+            <div class="counter c-cyan"><i class="fa-solid fa-robot"></i><div class="c-num" id="ftMaxBot">-</div><div class="c-label">Maks Bot</div></div>
+            <div class="counter c-purple"><i class="fa-solid fa-hashtag"></i><div class="c-num" id="ftPrefiks">-</div><div class="c-label">Prefiks Tersedia</div></div>
+          </div>
+        </div>
+        <div class="card glass-card">
+          <h4><i class="fa-solid fa-terminal"></i> Perintah Personal</h4>
+          <div id="featPersonal" class="feat-grid"></div>
+        </div>
+        <div class="card glass-card" id="featGroupWrap">
+          <h4><i class="fa-solid fa-users-gear"></i> Perintah Grup</h4>
+          <div id="featGroup" class="feat-grid"></div>
+        </div>
+      </section>
+
+      <!-- ============ INFO ============ -->
+      <section id="page-info" class="page hidden">
+        <div class="card glass-card info-card">
+          <div class="dev-avatar"><i class="fa-solid fa-user-astronaut"></i></div>
+          <h3>Tentang Developer</h3>
+          <p><b>ZerxsDev</b> — pengembang ZerxsBot, WhatsApp bot multi device berbasis Node.js &amp; @whiskeysockets/baileys.</p>
+          <div class="info-rows">
+            <div class="uf"><span>Versi Bot</span><b id="infVer">v1.0.0</b></div>
+            <div class="uf"><span>Engine</span><b>Baileys (Multi Device)</b></div>
+            <div class="uf"><span>AI System</span><b>OpenRouter — DeepSeek (bot biasa) / GPT-4o-mini (bot CS)</b></div>
+            <div class="uf"><span>Database</span><b>Google Spreadsheet + Apps Script</b></div>
+            <div class="uf"><span>Telegram</span><b><a href="https://t.me/zerxsdev" target="_blank">@zerxsdev</a></b></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PROFIL ============ -->
+      <section id="page-profile" class="page hidden">
+        <div class="card glass-card profile-card">
+          <div class="profile-top">
+            <div class="avatar-big" id="pfAvatar">Z</div>
+            <div>
+              <h3 id="pfName">-</h3>
+              <span class="tag" id="pfRole">-</span>
+              <p class="muted">Expired: <b id="pfExpire">-</b></p>
+            </div>
+          </div>
+          <div class="pf-pass">
+            <span>Kata Sandi</span>
+            <b id="pfPass">••••••••</b>
+          </div>
+          <button class="btn btn-primary" id="btnChangePass"><i class="fa-solid fa-key"></i> Ganti Password</button>
+
+          <div id="changePassForm" class="hidden cp-form">
+            <label class="field"><span>Password Lama</span><input type="password" id="cpOld" /></label>
+            <label class="field"><span>Password Baru</span><input type="password" id="cpNew" /></label>
+            <div class="row-end">
+              <button class="btn btn-success" id="btnDoChange"><i class="fa-solid fa-check"></i> Ubah</button>
+              <button class="btn btn-ghost" id="btnCancelChange">Batal</button>
+            </div>
+            <div id="cpMsg" class="msg-line"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ DEVELOPER ============ -->
+      <section id="page-developer" class="page hidden">
+        <div class="card glass-card">
+          <h3><i class="fa-solid fa-code"></i> Developer Panel</h3>
+          <div class="counters">
+            <div class="counter c-blue"><i class="fa-solid fa-users"></i><div class="c-num" id="dvUsers">0</div><div class="c-label">Total User di Spreadsheet</div></div>
+          </div>
+          <div class="counters" id="dvRoles"></div>
+        </div>
+
+        <div class="card glass-card">
+          <h4><i class="fa-solid fa-user-plus"></i> Create Account <span class="tag warn">Limit 8x / minggu</span></h4>
+          <div class="grid-2">
+            <label class="field"><span>Username</span><input type="text" id="dcUser" /></label>
+            <label class="field"><span>Password</span><input type="text" id="dcPass" /></label>
+            <label class="field"><span>Role</span>
+              <select id="dcRole">
+                <option value="member trial">Member Trial</option>
+                <option value="member permanen">Member Permanen</option>
+                <option value="admin permanen">Admin Permanen</option>
+              </select>
+            </label>
+          </div>
+          <button class="btn btn-primary" id="btnCreateAccount"><i class="fa-solid fa-bolt"></i> Create Account</button>
+          <div id="dcMsg" class="msg-line"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">© 2026 ZerxsBot — developed by <a href="https://t.me/zerxsdev" target="_blank">ZerxsDev</a></footer>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
