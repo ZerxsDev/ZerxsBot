@@ -1,0 +1,20 @@
+{
+  "name": "zerxsbot",
+  "version": "1.0.0",
+  "description": "ZerxsBot - WhatsApp bot (Baileys) dengan web panel pairing, role & Google Spreadsheet",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/bailey": "github:WhiskeySockets/Baileys",
+    "axios": "^1.7.2",
+    "bwip-js": "^4.11.4",
+    "express": "^4.19.2",
+    "jsqr": "^1.4.0",
+    "link-preview-js": "^3.0.6",
+    "pdfkit": "^0.15.0",
+    "pino": "^9.0.0",
+    "qrcode": "^1.5.4"
+  }
+}
