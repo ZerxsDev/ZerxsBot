@@ -1,0 +1,34 @@
+{
+  "name": "zerxsbot",
+  "version": "1.0.1",
+  "description": "ZerxsBot - WhatsApp Bot + Web Panel (Baileys) with Google Spreadsheet database",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "format": "prettier --write \"**/*.{js,json,html,css}\""
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys",
+    "zerxsbot"
+  ],
+  "author": "ZerxsDev",
+  "license": "MIT",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "axios": "^1.7.9",
+    "express": "^4.21.2",
+    "ffmpeg-static": "^5.3.0",
+    "fs-extra": "^11.3.0",
+    "jimp": "^0.22.12",
+    "open": "^10.1.0",
+    "p-queue": "^6.6.2",
+    "pino": "^9.6.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
+}
